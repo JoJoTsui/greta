@@ -127,8 +127,97 @@ include: 'rules/plt/dbs.smk'
 include: 'rules/plt/eval.smk'
 include: 'rules/plt/figs.smk'
 
+
+
+rule download_databases:
+    input:
+        # c2g outputs
+        "dbs/hg38/c2g/eqtlcatalogue/meta.tsv",
+        "dbs/hg38/c2g/eqtlcatalogue/eqtlcatalogue.bed",
+        "dbs/hg38/c2g/links.tsv.gz",
+        # cre outputs
+        "dbs/hg38/cre/blacklist/blacklist.bed",
+        "dbs/hg38/cre/encode/encode.bed",
+        "dbs/hg38/cre/gwascatalogue/gwascatalogue.bed",
+        # "dbs/hg38/cre/phastcons/phastcons.bed",
+        "dbs/hg38/cre/promoters/promoters.bed",
+        "dbs/hg38/cre/zhang21/zhang21.bed",
+        # gen outputs
+        "dbs/hg38/gen/tfs/lambert.csv",
+        "dbs/hg38/gen/tfs/scenic.csv",
+        "dbs/hg38/gen/gid/ensembl.csv",
+        "dbs/hg38/gen/pid/uniprot.csv",
+        # "dbs/hg38/gen/genome/celloracle/",
+        # "dbs/hg38/gen/genome/dictys/",
+        "dbs/hg38/gen/genome/scenicplus/annotation.tsv",
+        "dbs/hg38/gen/genome/scenicplus/chromsizes.tsv",
+        "dbs/hg38/gen/genome/scenicplus/tss.tsv",
+        # "dbs/hg38/gen/motif/granie/",
+        "dbs/hg38/gen/motif/dictys/dictys.motif",
+        "dbs/hg38/gen/motif/scenic/hg38_500bp_up_100bp_down_full_tx_v10_clust.genes_vs_motifs.rankings.feather",
+        "dbs/hg38/gen/motif/scenic/hg38_10kbp_up_10kbp_down_full_tx_v10_clust.genes_vs_motifs.rankings.feather",
+        "dbs/hg38/gen/motif/scenic/nr.hgnc-m0.001-o0.0.tbl",
+        # "dbs/hg38/gen/motif/scenicplus/human_motif_SCREEN.regions_vs_motifs.rankings.feather",
+        # "dbs/hg38/gen/motif/scenicplus/human_motif_SCREEN.regions_vs_motifs.scores.feather",
+        "dbs/hg38/gen/motif/scenicplus/motifs-v10nr_clust/nr.hgnc-m0.001-o0.0.tbl",
+        # gst outputs
+        "dbs/hg38/gst/collectri.csv",
+        "dbs/hg38/gst/dorothea.csv",
+        "dbs/hg38/gst/prog.csv",
+        # ont outputs
+        "dbs/ont/bto.tsv",
+        # prt outputs
+        "dbs/hg38/prt/knocktf/meta.csv",
+        "dbs/hg38/prt/knocktf/diff.csv",
+        # tfb outputs
+        "dbs/hg38/tfb/chipatlas/meta.tsv",
+        # "dbs/hg38/tfb/chipatlas/chipatlas.bed",
+        "dbs/hg38/tfb/remap2022/meta.tsv",
+        "dbs/hg38/tfb/remap2022/remap2022.bed",
+        "dbs/hg38/tfb/unibind/unibind.bed",
+        # tfm outputs
+        "dbs/hg38/tfm/hpa/hpa.tsv",
+        "dbs/hg38/tfm/tfmdb/tfmdb.tsv",
+        # tfp outputs
+        "dbs/hg38/tfp/intact/intact.tsv",
+        # "dbs/hg38/tfp/europmc/europmc.tsv",
+        # tss outputs
+        "dbs/hg38/gen/tss/celloracle.bed",
+        "dbs/hg38/gen/tss/dictys.bed",
+        # "dbs/hg38/gen/tss/figr.bed",
+        # "dbs/hg38/gen/tss/pando.bed",
+        # "dbs/hg38/gen/tss/granie.bed",
+        "dbs/hg38/gen/tss/scenicplus.bed",
+        "dbs/hg38/gen/tss/collectri.bed",
+        "dbs/hg38/gen/tss/dorothea.bed",
+        "dbs/hg38/gen/tss/random.bed",
+        "dbs/hg38/gen/tss/scenic.bed",
+    output:
+        touch("results/databases_downloaded.flag")
+    shell:
+        "touch {output}"
+
+# --- End of modified code ---
+
+rule prepare_pbmc10k:
+    input:
+        'dts/pbmc10k/annotated.h5mu'
+
+
+rule run_dictys_pbmc10k_all:
+    input:
+        'dts/pbmc10k/cases/all/runs/dictys.dictys.dictys.dictys.grn.csv'
+
+rule run_scenicplus_pbmc10k_all:
+    input:
+        'dts/pbmc10k/cases/all/runs/scenicplus.scenicplus.scenicplus.scenicplus.grn.csv'
+
 rule all:
     input:
+        'results/databases_downloaded.flag',
+        # Add other final desired outputs of the workflow
+        # Optionally add the new scenicplus output here if it should be part of the default 'all' target
+        # rules.run_scenicplus_pbmc10k_all.input,
         ''
 
 # snakemake --profile config/slurm/ --notemp ...

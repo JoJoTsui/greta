@@ -15,7 +15,8 @@ checkpoint c2g_m_eqtlcatalogue:
 
 checkpoint c2g_s_eqtlcatalogue:
     threads: 1
-    singularity: 'workflow/envs/gretabench.sif'
+    # singularity: 'workflow/envs/gretabench.sif' # Replaced singularity directive
+    conda: "gretabench" # Added conda directive with environment name
     input: rules.gen_gid_ensmbl.output,
     output: 'dbs/hg38/c2g/eqtlcatalogue/raw/{eqtl_smpl_grp}.{eqtl_tiss}.bed',
     params:
@@ -47,7 +48,8 @@ def eqtlcat_smpls(wildcards):
 
 checkpoint c2g_g_eqtlcatalogue:
     threads: 32
-    singularity: 'workflow/envs/gretabench.sif'
+    # singularity: 'workflow/envs/gretabench.sif' # Replaced singularity directive
+    conda: "gretabench" # Added conda directive with environment name
     input:
         smpls=eqtlcat_smpls,
         mta='dbs/hg38/c2g/eqtlcatalogue/meta.tsv'
@@ -71,7 +73,8 @@ def eqtlcat_genes(wildcards):
 
 rule c2g_eqtlcatalogue:
     threads: 32
-    singularity: 'workflow/envs/gretabench.sif'
+    # singularity: 'workflow/envs/gretabench.sif' # Replaced singularity directive
+    conda: "gretabench" # Added conda directive with environment name
     input: eqtlcat_genes
     output: 'dbs/hg38/c2g/eqtlcatalogue/eqtlcatalogue.bed'
     shell:
@@ -80,4 +83,17 @@ rule c2g_eqtlcatalogue:
         'sort -k1,1 -k2,2n "{{}}" | bedtools merge -i - -c 4,5 -o distinct,distinct > "{{}}.tmp"' && \
         cat dbs/hg38/c2g/eqtlcatalogue/raw/genes/*.bed.tmp > {output} && \
         rm dbs/hg38/c2g/eqtlcatalogue/raw/genes/*.bed.tmp
+        """
+
+# Add a rule to create the links.tsv.gz file
+rule c2g_links:
+    threads: 1
+    conda: "gretabench"
+    input: 'dbs/hg38/c2g/eqtlcatalogue/eqtlcatalogue.bed'
+    output: 'dbs/hg38/c2g/links.tsv.gz'
+    shell:
+        """
+        # Convert eqtlcatalogue.bed to links.tsv.gz format
+        # Adjust this command based on your specific requirements
+        awk '{{print $1"\t"$2"\t"$3"\t"$4"\t"$5}}' {input} | gzip > {output}
         """

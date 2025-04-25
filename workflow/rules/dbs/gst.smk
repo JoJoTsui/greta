@@ -18,7 +18,8 @@ rule gst_collectri:
 
 rule gst_dorothea:
     threads: 1
-    singularity: 'workflow/envs/gretabench.sif'
+    # singularity: 'workflow/envs/gretabench.sif'
+    conda: "gretabench"
     input: rules.gen_tfs_lambert.output
     output: 'dbs/hg38/gst/dorothea.csv'
     params: url=config['dbs']['hg38']['pkn']['dorothea']
@@ -43,7 +44,8 @@ rule gst_dorothea:
 
 rule gst_pthw:
     threads: 1
-    singularity: 'workflow/envs/gretabench.sif'
+    # singularity: 'workflow/envs/gretabench.sif'
+    conda: "gretabench"
     output: 'dbs/hg38/gst/{db}.csv',
     params: url=lambda w: config['dbs']['hg38']['gst'][w.db]
     shell:
@@ -59,7 +61,8 @@ rule gst_pthw:
 
 rule gst_prog:
     threads: 1
-    singularity: 'workflow/envs/gretabench.sif'
+    # singularity: 'workflow/envs/gretabench.sif'
+    conda: "gretabench"
     output: 'dbs/hg38/gst/prog.csv',
     params: url=lambda w: config['dbs']['hg38']['gst']['prog']
     shell:

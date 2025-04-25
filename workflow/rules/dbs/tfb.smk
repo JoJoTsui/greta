@@ -3,7 +3,8 @@ localrules: tfb_m_chipatlas, tfb_t_chipatlas, tfb_chipatlas, tfb_m_remap2022, tf
 
 checkpoint tfb_m_chipatlas:
     threads: 1
-    singularity: 'workflow/envs/gretabench.sif'
+    # singularity: 'workflow/envs/gretabench.sif' # Replaced singularity directive
+    conda: "gretabench" # Added conda directive
     input: rules.gen_tfs_lambert.output
     output: 'dbs/hg38/tfb/chipatlas/meta.tsv'
     params:
@@ -17,7 +18,8 @@ checkpoint tfb_m_chipatlas:
 
 rule tfb_t_chipatlas:
     threads: 1
-    singularity: 'workflow/envs/gretabench.sif'
+    # singularity: 'workflow/envs/gretabench.sif' # Replaced singularity directive
+    conda: "gretabench" # Added conda directive
     input: 'dbs/hg38/tfb/chipatlas/meta.tsv'
     output: 'dbs/hg38/tfb/chipatlas/raw/{chipatlas_tf}.bed'
     params:
@@ -44,7 +46,8 @@ def chipatlas_aggr(wildcards):
 
 rule tfb_chipatlas:
     threads: 1
-    singularity: 'workflow/envs/gretabench.sif'
+    # singularity: 'workflow/envs/gretabench.sif' # Replaced singularity directive
+    conda: "gretabench" # Added conda directive
     input: chipatlas_aggr
     output: 'dbs/hg38/tfb/chipatlas/chipatlas.bed'
     shell:
@@ -56,7 +59,8 @@ rule tfb_chipatlas:
 
 rule tfb_m_remap2022:
     threads: 1
-    singularity: 'workflow/envs/gretabench.sif'
+    # singularity: 'workflow/envs/gretabench.sif' # Replaced singularity directive
+    conda: "gretabench" # Added conda directive
     input: rules.ont_bto.output[0]
     output: 'dbs/hg38/tfb/remap2022/meta.tsv'
     params:
@@ -70,7 +74,8 @@ rule tfb_m_remap2022:
 
 checkpoint tfb_r_remap2022:
     threads: 1
-    singularity: 'workflow/envs/gretabench.sif'
+    # singularity: 'workflow/envs/gretabench.sif' # Replaced singularity directive
+    conda: "gretabench" # Added conda directive
     input:
         tfs=rules.gen_tfs_lambert.output,
         mta=rules.tfb_m_remap2022.output
@@ -100,7 +105,8 @@ def remap2022_aggr(wildcards):
 
 rule tfb_remap2022:
     threads: 32
-    singularity: 'workflow/envs/gretabench.sif'
+    # singularity: 'workflow/envs/gretabench.sif' # Replaced singularity directive
+    conda: "gretabench" # Added conda directive
     input: remap2022_aggr
     output: 'dbs/hg38/tfb/remap2022/remap2022.bed'
     shell:
@@ -115,7 +121,8 @@ rule tfb_remap2022:
 
 checkpoint tfb_r_unibind:
     threads: 1
-    singularity: 'workflow/envs/gretabench.sif'
+    # singularity: 'workflow/envs/gretabench.sif' # Replaced singularity directive
+    conda: "gretabench" # Added conda directive
     input: rules.gen_tfs_lambert.output,
     output: directory('dbs/hg38/tfb/unibind/raw/')
     params:
@@ -143,7 +150,8 @@ def unibind_aggr(w):
 
 rule tfb_unibind:
     threads: 32
-    singularity: 'workflow/envs/gretabench.sif'
+    # singularity: 'workflow/envs/gretabench.sif' # Replaced singularity directive
+    conda: "gretabench" # Added conda directive
     input: unibind_aggr
     output: 'dbs/hg38/tfb/unibind/unibind.bed'
     shell:

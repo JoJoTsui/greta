@@ -3,7 +3,8 @@ localrules: ont_bto
 
 checkpoint ont_bto:
     threads: 1
-    singularity: 'workflow/envs/gretabench.sif'
+    # singularity: 'workflow/envs/gretabench.sif'
+    conda: "gretabench"
     output: 'dbs/ont/bto.tsv'
     params:
         url=config['dbs']['ont']['bto'],

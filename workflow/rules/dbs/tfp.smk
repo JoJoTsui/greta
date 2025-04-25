@@ -29,7 +29,8 @@ rule tfp_intact:
 
 rule tfp_europmc_raw:
     threads: 1
-    singularity: 'workflow/envs/gretabench.sif'
+    # singularity: 'workflow/envs/gretabench.sif'
+    conda: "gretabench"
     input: rules.gen_tfs_lambert.output,
     output:
         single='dbs/hg38/tfp/europmc/raw/single.csv',
@@ -48,7 +49,8 @@ rule tfp_europmc_raw:
 
 rule tfp_europmc:
     threads: 1
-    singularity: 'workflow/envs/gretabench.sif'
+    # singularity: 'workflow/envs/gretabench.sif'
+    conda: "gretabench"
     input:
         single=rules.tfp_europmc_raw.output.single,
         pairs=rules.tfp_europmc_raw.output.pairs,

@@ -3,7 +3,8 @@ localrules: tfm_hpa, tfm_tfmdb
 
 rule tfm_hpa:
     threads: 1
-    singularity: 'workflow/envs/gretabench.sif'
+    # singularity: 'workflow/envs/gretabench.sif'
+    conda: "gretabench"
     input: rules.gen_tfs_lambert.output
     output: 'dbs/hg38/tfm/hpa/hpa.tsv'
     params:
@@ -20,7 +21,8 @@ rule tfm_hpa:
 
 rule tfm_tfmdb:
     threads: 1
-    singularity: 'workflow/envs/gretabench.sif'
+    # singularity: 'workflow/envs/gretabench.sif'
+    conda: "gretabench"
     output: 'dbs/hg38/tfm/tfmdb/tfmdb.tsv'
     params:
         url=config['dbs']['hg38']['tfm']['tfmdb']

@@ -11,7 +11,7 @@ rule install_dictys:
     output: 'workflow/envs/dictys.txt'
     shell:
         """
-        pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118 && \
+        # pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118 && \
         touch {output}
         """
 
@@ -32,15 +32,17 @@ rule gen_tfs_scenic:
 
 rule gen_gid_ensmbl:
     threads: 1
-    singularity: 'workflow/envs/gretabench.sif'
-    input: 'workflow/envs/gretabench.sif'
+    # singularity: 'workflow/envs/gretabench.sif'
+    # input: 'workflow/envs/gretabench.sif'
+    conda: "gretabench"
     output: expand('dbs/{org}/gen/gid/ensembl.csv', org=orgms)
     shell: "Rscript workflow/scripts/dbs/gen/gid/ensmbl.R {output}"
 
 
 rule gen_pid_uniprot:
     threads: 1
-    singularity: 'workflow/envs/gretabench.sif'
+    # singularity: 'workflow/envs/gretabench.sif'
+    conda: "gretabench"
     output: expand('dbs/{org}/gen/pid/uniprot.csv', org=orgms)
     shell: "Rscript workflow/scripts/dbs/gen/pid/uniprot.R {output}"
 
@@ -57,8 +59,8 @@ rule gen_genome_celloracle:
 
 
 rule gen_genome_dictys:
-    conda: '{home_path}/miniforge3/envs/dictys'.format(home_path=home_path)
-    input: rules.install_dictys.output
+    conda: "dictys"
+    # input: rules.install_dictys.output
     output: directory('dbs/hg38/gen/genome/dictys/')
     shell:
         """
@@ -67,7 +69,8 @@ rule gen_genome_dictys:
 
 
 rule gen_genome_scenicplus:
-    singularity: 'workflow/envs/scenicplus.sif'
+    # singularity: 'workflow/envs/scenicplus.sif'
+    conda: "scenicplus"
     output:
         ann='dbs/hg38/gen/genome/scenicplus/annotation.tsv',
         csz='dbs/hg38/gen/genome/scenicplus/chromsizes.tsv',
@@ -135,6 +138,32 @@ rule gen_motif_scenic:
         """
 
 
+# rule gen_motif_scenicplus:
+#     threads: 1
+#     output:
+#         human_rankings="dbs/hg38/gen/motif/scenicplus/human_motif_SCREEN.regions_vs_motifs.rankings.feather",
+#         human_scores="dbs/hg38/gen/motif/scenicplus/human_motif_SCREEN.regions_vs_motifs.scores.feather",
+#         mouse_rankings="dbs/mm10/gen/motif/scenicplus/mouse_motif_SCREEN.regions_vs_motifs.rankings.feather",
+#         mouse_scores="dbs/mm10/gen/motif/scenicplus/mouse_motif_SCREEN.regions_vs_motifs.scores.feather",
+#         human_annot="dbs/hg38/gen/motif/scenicplus/motifs-v10nr_clust/nr.hgnc-m0.001-o0.0.tbl",
+#         mouse_annot="dbs/mm10/gen/motif/scenicplus/motifs-v10nr_clust/nr.mgi-m0.001-o0.0.tbl",
+#     params:
+#         human_rankings_url="https://resources.aertslab.org/cistarget/databases/homo_sapiens/hg38/screen/mc_v10_clust/region_based/hg38_screen_v10_clust.regions_vs_motifs.rankings.feather",
+#         human_scores_url="https://resources.aertslab.org/cistarget/databases/homo_sapiens/hg38/screen/mc_v10_clust/region_based/hg38_screen_v10_clust.regions_vs_motifs.scores.feather",
+#         mouse_rankings_url="https://resources.aertslab.org/cistarget/databases/mus_musculus/mm10/screen/mc_v10_clust/region_based/mm10_screen_v10_clust.regions_vs_motifs.rankings.feather",
+#         mouse_scores_url="https://resources.aertslab.org/cistarget/databases/mus_musculus/mm10/screen/mc_v10_clust/region_based/mm10_screen_v10_clust.regions_vs_motifs.scores.feather",
+#         human_annot_url="https://resources.aertslab.org/cistarget/motif2tf/motifs-v10nr_clust-nr.hgnc-m0.001-o0.0.tbl",
+#         mouse_annot_url="https://resources.aertslab.org/cistarget/motif2tf/motifs-v10nr_clust-nr.mgi-m0.001-o0.0.tbl",
+#     shell:
+#         """
+#         # wget --no-verbose -O {output.human_rankings} {params.human_rankings_url}
+#         # wget --no-verbose -O {output.human_scores} {params.human_scores_url}
+#         # wget --no-verbose -O {output.mouse_rankings} {params.mouse_rankings_url}
+#         # wget --no-verbose -O {output.mouse_scores} {params.mouse_scores_url}
+#         wget --no-verbose -O {output.human_annot} {params.human_annot_url}
+#         # wget --no-verbose -O {output.mouse_annot} {params.mouse_annot_url}
+#         """
+
 rule gen_motif_scenicplus:
     threads: 1
     output:
@@ -144,26 +173,15 @@ rule gen_motif_scenicplus:
         mouse_scores="dbs/mm10/gen/motif/scenicplus/mouse_motif_SCREEN.regions_vs_motifs.scores.feather",
         human_annot="dbs/hg38/gen/motif/scenicplus/motifs-v10nr_clust/nr.hgnc-m0.001-o0.0.tbl",
         mouse_annot="dbs/mm10/gen/motif/scenicplus/motifs-v10nr_clust/nr.mgi-m0.001-o0.0.tbl",
-    params:
-        human_rankings_url="https://resources.aertslab.org/cistarget/databases/homo_sapiens/hg38/screen/mc_v10_clust/region_based/hg38_screen_v10_clust.regions_vs_motifs.rankings.feather",
-        human_scores_url="https://resources.aertslab.org/cistarget/databases/homo_sapiens/hg38/screen/mc_v10_clust/region_based/hg38_screen_v10_clust.regions_vs_motifs.scores.feather",
-        mouse_rankings_url="https://resources.aertslab.org/cistarget/databases/mus_musculus/mm10/screen/mc_v10_clust/region_based/mm10_screen_v10_clust.regions_vs_motifs.rankings.feather",
-        mouse_scores_url="https://resources.aertslab.org/cistarget/databases/mus_musculus/mm10/screen/mc_v10_clust/region_based/mm10_screen_v10_clust.regions_vs_motifs.scores.feather",
-        human_annot_url="https://resources.aertslab.org/cistarget/motif2tf/motifs-v10nr_clust-nr.hgnc-m0.001-o0.0.tbl",
-        mouse_annot_url="https://resources.aertslab.org/cistarget/motif2tf/motifs-v10nr_clust-nr.mgi-m0.001-o0.0.tbl",
     shell:
         """
-        wget --no-verbose -O {output.human_rankings} {params.human_rankings_url}
-        wget --no-verbose -O {output.human_scores} {params.human_scores_url}
-        wget --no-verbose -O {output.mouse_rankings} {params.mouse_rankings_url}
-        wget --no-verbose -O {output.mouse_scores} {params.mouse_scores_url}
-        wget --no-verbose -O {output.human_annot} {params.human_annot_url}
-        wget --no-verbose -O {output.mouse_annot} {params.mouse_annot_url}
+        rsync -avP /t9k/mnt/joey/work/LLM/SCENIC+/DB/dbs/hg38/gen/motif/scenicplus/ /t9k/mnt/joey/work/LLM/GRETA/greta/dbs/hg38/gen/motif/scenicplus/
+        rsync -avP /t9k/mnt/joey/work/LLM/SCENIC+/DB/dbs/mm10/gen/motif/scenicplus/ /t9k/mnt/joey/work/LLM/GRETA/greta/dbs/mm10/gen/motif/scenicplus/
         """
 
 
 rule gen_ann_dictys:
-    conda: '{home_path}/miniforge3/envs/dictys'.format(home_path=home_path)
+    conda: "dictys"
     params:
         url="http://ftp.ensembl.org/pub/release-107/gtf/homo_sapiens/Homo_sapiens.GRCh38.107.gtf.gz"
     output: 'dbs/hg38/gen/ann/dictys/ann.bed'
@@ -177,7 +195,8 @@ rule gen_ann_dictys:
 
 
 rule gen_ann_pando:
-    singularity: 'workflow/envs/pando.sif'
+    # singularity: 'workflow/envs/pando.sif'
+    conda: "gretabench"
     output: 'dbs/hg38/gen/ann/pando/ann.csv'
     shell:
         """

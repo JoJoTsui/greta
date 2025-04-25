@@ -4,7 +4,8 @@ gen_tss_collectri, gen_tss_dorothea, gen_tss_random, gen_tss_scenic
 
 rule gen_tss_celloracle:
     threads: 1
-    singularity: 'workflow/envs/gretabench.sif'
+    # singularity: 'workflow/envs/gretabench.sif'
+    conda: "gretabench"
     output: 'dbs/hg38/gen/tss/celloracle.bed'
     shell:
         """
@@ -14,7 +15,8 @@ rule gen_tss_celloracle:
 
 rule gen_tss_dictys:
     threads: 1
-    singularity: 'workflow/envs/gretabench.sif'
+    # singularity: 'workflow/envs/gretabench.sif'
+    conda: "gretabench"
     input: rules.gen_ann_dictys.output
     output: 'dbs/hg38/gen/tss/dictys.bed'
     shell:
@@ -57,7 +59,8 @@ rule gen_tss_granie:
 
 rule gen_tss_scenicplus:
     threads: 1
-    singularity: 'workflow/envs/scenicplus.sif'
+    # singularity: 'workflow/envs/scenicplus.sif'
+    conda: "scenicplus"
     output: 'dbs/hg38/gen/tss/scenicplus.bed'
     shell:
         """
