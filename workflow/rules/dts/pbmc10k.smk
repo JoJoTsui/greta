@@ -1,6 +1,7 @@
 rule download_pbmc10k:
     threads: 1
-    singularity: 'workflow/envs/figr.sif'
+    # singularity: 'workflow/envs/figr.sif'
+    conda: "gretabench"
     output:
         frags='dts/pbmc10k/smpl.frags.tsv.gz',
         tbis='dts/pbmc10k/smpl.frags.tsv.gz.tbi',
@@ -16,15 +17,17 @@ rule download_pbmc10k:
 
 rule prcannot_pbmc10k:
     threads: 1
-    singularity: 'workflow/envs/gretabench.sif'
+    # singularity: 'workflow/envs/gretabench.sif'
+    conda: "gretabench"
     output: annot=temp(local('dts/pbmc10k/annot.csv')),
     shell:
         "python workflow/scripts/dts/pbmc10k/prc_annot.py -a {output.annot}"
 
 
 rule callpeaks_pbmc10k:
-    threads: 32
-    singularity: 'workflow/envs/gretabench.sif'
+    threads: 18
+    # singularity: 'workflow/envs/gretabench.sif'
+    conda: "gretabench"
     input:
         frags=rules.download_pbmc10k.output.frags,
         annot=rules.prcannot_pbmc10k.output.annot,
@@ -43,7 +46,8 @@ rule callpeaks_pbmc10k:
 
 rule annotate_pbmc10k:
     threads: 1
-    singularity: 'workflow/envs/gretabench.sif'
+    # singularity: 'workflow/envs/gretabench.sif'
+    conda: "gretabench"
     input:
         annot=rules.prcannot_pbmc10k.output.annot,
         peaks=rules.callpeaks_pbmc10k.output.peaks,

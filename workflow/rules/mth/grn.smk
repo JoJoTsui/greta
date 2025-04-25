@@ -3,7 +3,8 @@ localrules: grn_run
 
 rule grn_run:
     threads: 1
-    singularity: 'workflow/envs/gretabench.sif'
+    # singularity: 'workflow/envs/gretabench.sif'
+    conda: "gretabench"
     input: lambda wildcards: map_rules('mdl', wildcards.mdl),
     output:
         out='dts/{dat}/cases/{case}/runs/{pre}.{p2g}.{tfb}.{mdl}.grn.csv'
@@ -17,7 +18,8 @@ rule grn_run:
 
 rule mdl_collectri:
     threads: 1
-    singularity: 'workflow/envs/gretabench.sif'
+    # singularity: 'workflow/envs/gretabench.sif'
+    conda: "gretabench"
     input:
         mdata=rules.extract_case.output.mdata,
         grn=rules.gst_collectri.output,
@@ -39,7 +41,8 @@ rule mdl_collectri:
 
 rule mdl_dorothea:
     threads: 1
-    singularity: 'workflow/envs/gretabench.sif'
+    # singularity: 'workflow/envs/gretabench.sif'
+    conda: "gretabench"
     input:
         mdata=rules.extract_case.output.mdata,
         grn=rules.gst_dorothea.output,

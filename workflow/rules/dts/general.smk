@@ -1,6 +1,7 @@
 rule extract_case:
-    threads: 32
-    singularity: 'workflow/envs/gretabench.sif'
+    threads: 18
+    # singularity: 'workflow/envs/gretabench.sif'
+    conda: 'gretabench'
     input: lambda w: map_rules('annotate', w.dat)
     output:
         mdata='dts/{dat}/cases/{case}/mdata.h5mu',
