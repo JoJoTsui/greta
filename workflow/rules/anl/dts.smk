@@ -3,7 +3,8 @@ localrules: dts_qcstats
 
 rule dts_qcstats:
     threads: 1
-    singularity: 'workflow/envs/gretabench.sif'
+    # singularity: 'workflow/envs/gretabench.sif'
+    conda: 'gretabench'
     input: rules.extract_case.output.mdata
     output:
         qc='anl/dts/{dat}.{case}.qc.csv',

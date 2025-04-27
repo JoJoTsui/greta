@@ -201,7 +201,9 @@ rule download_databases:
 
 rule prepare_pbmc10k:
     input:
-        'dts/pbmc10k/annotated.h5mu'
+        'dts/pbmc10k/annotated.h5mu',
+        qc='anl/dts/pbmc10k.all.qc.csv',
+        nc='anl/dts/pbmc10k.all.nc.csv'
 
 
 rule run_dictys_pbmc10k_all:
@@ -212,12 +214,15 @@ rule run_scenicplus_pbmc10k_all:
     input:
         'dts/pbmc10k/cases/all/runs/scenicplus.scenicplus.scenicplus.scenicplus.grn.csv'
 
+
 rule all:
     input:
         'results/databases_downloaded.flag',
         # Add other final desired outputs of the workflow
         # Optionally add the new scenicplus output here if it should be part of the default 'all' target
         # rules.run_scenicplus_pbmc10k_all.input,
+        # Optionally add the QC results to the default 'all' target
+        # rules.qc_pbmc10k_all.input,
         ''
 
 # snakemake --profile config/slurm/ --notemp ...
