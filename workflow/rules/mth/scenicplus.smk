@@ -1,8 +1,8 @@
 rule mdl_o_scenicplus:
-    threads: 32
-    singularity: 'workflow/envs/scenicplus.sif'
+    threads: 18
+    conda: "scenicplus" # Replaced singularity with conda
     input:
-        img='workflow/envs/scenicplus.sif',
+        # img='workflow/envs/scenicplus.sif', # Removed singularity image input
         mdata=rules.extract_case.output.mdata,
         blist=rules.cre_blacklist.output,
         rnk=rules.gen_motif_scenicplus.output.human_rankings,
@@ -45,7 +45,7 @@ rule mdl_o_scenicplus:
 
 rule pre_scenicplus:
     threads: 1
-    singularity: 'workflow/envs/scenicplus.sif'
+    conda: "scenicplus" # Replaced singularity with conda
     input:
         mdata=rules.extract_case.output.mdata,
         dir=rules.mdl_o_scenicplus.output.dir,
@@ -61,8 +61,8 @@ rule pre_scenicplus:
 
 
 rule p2g_scenicplus:
-    threads: 32
-    singularity: 'workflow/envs/scenicplus.sif'
+    threads: 18
+    conda: "scenicplus" # Replaced singularity with conda
     input:
         dir=rules.mdl_o_scenicplus.output.dir,
         pre=lambda wildcards: map_rules('pre', wildcards.pre),
@@ -98,7 +98,7 @@ rule p2g_scenicplus:
 
 rule tfb_scenicplus:
     threads: 1
-    singularity: 'workflow/envs/gretabench.sif'
+    conda: "scenicplus" # Replaced singularity with conda
     input:
         dir=rules.mdl_o_scenicplus.output.dir,
         pre=lambda wildcards: map_rules('pre', wildcards.pre),
@@ -121,8 +121,8 @@ rule tfb_scenicplus:
 
 
 rule mdl_scenicplus:
-    threads: 32
-    singularity: 'workflow/envs/scenicplus.sif'
+    threads: 18
+    conda: "scenicplus" # Replaced singularity with conda
     input:
         pre=lambda wildcards: map_rules('pre', wildcards.pre),
         p2g=lambda wildcards: map_rules('p2g', wildcards.p2g),

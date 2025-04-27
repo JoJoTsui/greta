@@ -47,6 +47,7 @@ motifs.X = ss.csr_matrix(motifs.X)
 
 # Find motif annots
 motif_to_tf = load_motif_annotations(
+    fname="/t9k/mnt/joey/work/LLM/GRETA/greta/dbs/hg38/gen/motif/scenicplus/motifs-v10nr_clust/nr.hgnc-m0.001-o0.0.tbl", # Added local file path
     specie = "homo_sapiens",
     version = "v10nr_clust",
     motif_similarity_fdr = 0.001,
