@@ -3,7 +3,8 @@ localrules: prior_tfm, prior_tfp, prior_cre
 
 rule prior_tfm:
     threads: 1
-    singularity: 'workflow/envs/gretabench.sif'
+    # singularity: 'workflow/envs/gretabench.sif'
+    conda: 'gretabench'
     input:
         grn=lambda wildcards: rules.grn_run.output.out.format(**wildcards),
         db='dbs/hg38/tfm/{db}/{db}.tsv',
@@ -20,7 +21,8 @@ rule prior_tfm:
 
 rule prior_tfp:
     threads: 1
-    singularity: 'workflow/envs/gretabench.sif'
+    # singularity: 'workflow/envs/gretabench.sif'
+    conda: 'gretabench'
     input:
         grn=lambda wildcards: rules.grn_run.output.out.format(**wildcards),
         db='dbs/hg38/tfp/{db}/{db}.tsv',
@@ -37,7 +39,8 @@ rule prior_tfp:
 
 rule prior_tfb:
     threads: 1
-    singularity: 'workflow/envs/gretabench.sif'
+    # singularity: 'workflow/envs/gretabench.sif'
+    conda: 'gretabench'
     input:
         grn=lambda wildcards: rules.grn_run.output.out.format(**wildcards),
         db='dbs/hg38/tfb/{db}/{db}.bed',
@@ -57,7 +60,8 @@ rule prior_tfb:
 
 rule prior_cre:
     threads: 1
-    singularity: 'workflow/envs/gretabench.sif'
+    # singularity: 'workflow/envs/gretabench.sif'
+    conda: 'gretabench'
     input:
         grn=lambda wildcards: rules.grn_run.output.out.format(**wildcards),
         db='dbs/hg38/cre/{db}/{db}.bed',
@@ -74,7 +78,8 @@ rule prior_cre:
 
 rule prior_c2g:
     threads: 1
-    singularity: 'workflow/envs/gretabench.sif'
+    # singularity: 'workflow/envs/gretabench.sif'
+    conda: 'gretabench'
     input:
         grn=lambda wildcards: rules.grn_run.output.out.format(**wildcards),
         resource='dbs/hg38/c2g/{db}/{db}.bed',

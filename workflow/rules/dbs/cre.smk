@@ -46,7 +46,8 @@ rule cre_gwascatalogue:
 
 rule cre_phastcons:
     threads: 1
-    singularity: 'workflow/envs/pando.sif'
+    # singularity: 'workflow/envs/pando.sif'
+    conda: "gretabench"
     output: 'dbs/hg38/cre/phastcons/phastcons.bed'
     params:
         url=config['dbs']['hg38']['cre']['phastcons']

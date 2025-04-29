@@ -192,6 +192,9 @@ rule download_databases:
         "dbs/hg38/gen/tss/dorothea.bed",
         "dbs/hg38/gen/tss/random.bed",
         "dbs/hg38/gen/tss/scenic.bed",
+        # anl/dbs outputs
+        "anl/dbs/stats.csv",
+        "anl/dbs/terms.csv",
     output:
         touch("results/databases_downloaded.flag")
     shell:
@@ -215,9 +218,37 @@ rule run_scenicplus_pbmc10k_all:
         'dts/pbmc10k/cases/all/runs/scenicplus.scenicplus.scenicplus.scenicplus.grn.csv'
 
 
+# --- Start of new rule ---
+
+rule benchmark_prior_pbmc10k_specific:
+    input:
+        # Prior TFM metrics for pbmc10k.all
+        expand('anl/metrics/prior/tfm/{db}/pbmc10k.all.scores.csv',
+               db=config['dbs']['hg38']['tfm'].keys()),
+        # Prior TFP metrics for pbmc10k.all
+        expand('anl/metrics/prior/tfp/{db}/pbmc10k.all.scores.csv',
+               db=config['dbs']['hg38']['tfp'].keys()),
+        # Prior TFB metrics for pbmc10k.all
+        expand('anl/metrics/prior/tfb/{db}/pbmc10k.all.scores.csv',
+               db=config['dbs']['hg38']['tfb'].keys()),
+        # Prior CRE metrics for pbmc10k.all
+        expand('anl/metrics/prior/cre/{db}/pbmc10k.all.scores.csv',
+               db=config['dbs']['hg38']['cre'].keys()),
+        # Prior C2G metrics for pbmc10k.all
+        expand('anl/metrics/prior/c2g/{db}/pbmc10k.all.scores.csv',
+               db=config['dbs']['hg38']['c2g'].keys()),
+    output:
+        touch("results/benchmark_prior_pbmc10k_specific.flag")
+    shell:
+        "touch {output}"
+
+# --- End of new rule ---
+
+
 rule all:
     input:
         'results/databases_downloaded.flag',
+        rules.benchmark_prior_pbmc10k_specific.output, # Added the new target flag
         # Add other final desired outputs of the workflow
         # Optionally add the new scenicplus output here if it should be part of the default 'all' target
         # rules.run_scenicplus_pbmc10k_all.input,

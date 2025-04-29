@@ -17,7 +17,8 @@ rule aggr_metric:
 
 rule metric_summ:
     threads: 1
-    singularity: 'workflow/envs/gretabench.sif'
+    # singularity: 'workflow/envs/gretabench.sif'
+    conda: 'gretabench'
     input:
         [
             'anl/metrics/mech/prt/knocktf/{dat}.{case}.scores.csv',
