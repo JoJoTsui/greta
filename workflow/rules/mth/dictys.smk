@@ -2,7 +2,7 @@ localrules: install_dictys
 
 
 rule pre_dictys:
-    threads: 1
+    threads: 4
     conda: "dictys"
     input:
         # img=rules.install_dictys.output,
@@ -23,7 +23,7 @@ rule pre_dictys:
 
 
 rule p2g_dictys:
-    threads: 1
+    threads: 4
     conda: "dictys"
     input:
         pre=lambda wildcards: map_rules('pre', wildcards.pre),
@@ -54,7 +54,7 @@ rule p2g_dictys:
 
 
 rule tfb_dictys:
-    threads: 16
+    threads: 18
     conda: "dictys"
     container: None
     input:
@@ -92,7 +92,7 @@ rule tfb_dictys:
 
 
 rule mdl_dictys:
-    threads: 4
+    threads: 18
     conda: "dictys"
     container: None
     input:
@@ -138,7 +138,7 @@ rule mdl_dictys:
 
 
 rule mdl_o_dictys:
-    threads: 4
+    threads: 18
     conda: "dictys"
     container: None
     input:

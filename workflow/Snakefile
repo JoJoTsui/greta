@@ -33,15 +33,24 @@ def make_combs_rules(w, mthds, baselines, rule_name):
     out = getattr(rules, rule_name).output.out
     rule_outputs = []
     if w.dat not in nocombs_datasets:
-        for pre, p2g, tfb, mdl in product(mthds, repeat=4):
-            rule_outputs.append(
-                format_rule(out, w=w, pre=pre, p2g=p2g, tfb=tfb, mdl=mdl)
-            )
+        # Original code generating all combinations:
+        # for pre, p2g, tfb, mdl in product(mthds, repeat=4):
+        #     rule_outputs.append(
+        #         format_rule(out, w=w, pre=pre, p2g=p2g, tfb=tfb, mdl=mdl)
+        #     )
+        # Modified code to generate only consistent combinations:
+        for mth in mthds:
+             rule_outputs.append(
+                 format_rule(out, w=w, pre=mth, p2g=mth, tfb=mth, mdl=mth)
+             )
     else:
+        # This part handles datasets where combinations are not needed, keep as is
         for mth in mthds:
             rule_outputs.append(format_rule(out, w=w, pre=mth))
+    # Keep the logic for 'o_' prefixed methods (original method runs)
     for mth in mthds:
         rule_outputs.append(format_rule(out, w=w, pre='o_' + mth))
+    # Keep the logic for baselines (currently empty based on previous context)
     for bsl in baselines:
         rule_outputs.append(format_rule(out, w=w, pre=bsl))
     return rule_outputs
@@ -63,8 +72,10 @@ def restart_mem(wildcards, attempt):
 configfile: 'config/config.yaml'
 
 orgms = [k for k in config['dbs'] if k != 'ont']
-mthds = [m for m in list(config['methods'].keys())]
-baselines = config['baselines']
+# mthds = [m for m in list(config['methods'].keys())] # Original line
+mthds = ['scenicplus', 'dictys'] # Keep only scenicplus and dictys
+# baselines = config['baselines']
+baselines = []
 
 datasets = list(config['dts'].keys())
 stab_datasets = config['stab_datasets']
@@ -88,12 +99,12 @@ include: 'rules/dbs/prt.smk'
 
 # Datasets
 include: 'rules/dts/pbmc10k.smk'
-include: 'rules/dts/reprofibro.smk'
-include: 'rules/dts/pitupair.smk'
-include: 'rules/dts/pitunpair.smk'
-include: 'rules/dts/fakepair.smk'
-include: 'rules/dts/heartatlas.smk'
-include: 'rules/dts/brain.smk'
+# include: 'rules/dts/reprofibro.smk'
+# include: 'rules/dts/pitupair.smk'
+# include: 'rules/dts/pitunpair.smk'
+# include: 'rules/dts/fakepair.smk'
+# include: 'rules/dts/heartatlas.smk'
+# include: 'rules/dts/brain.smk'
 include: 'rules/dts/general.smk'
 
 # Methods
@@ -225,12 +236,12 @@ rule benchmark_prior_pbmc10k_specific:
         # Prior TFM metrics for pbmc10k.all
         expand('anl/metrics/prior/tfm/{db}/pbmc10k.all.scores.csv',
                db=config['dbs']['hg38']['tfm'].keys()),
-        # Prior TFP metrics for pbmc10k.all
+        # Prior TFP metrics for pbmc10k.all (excluding europmc)
         expand('anl/metrics/prior/tfp/{db}/pbmc10k.all.scores.csv',
-               db=config['dbs']['hg38']['tfp'].keys()),
-        # Prior TFB metrics for pbmc10k.all
+               db=[k for k in config['dbs']['hg38']['tfp'].keys() if k != 'europmc']),
+        # Prior TFB metrics for pbmc10k.all (excluding chipatlas)
         expand('anl/metrics/prior/tfb/{db}/pbmc10k.all.scores.csv',
-               db=config['dbs']['hg38']['tfb'].keys()),
+               db=[k for k in config['dbs']['hg38']['tfb'].keys() if k != 'chipatlas']),
         # Prior CRE metrics for pbmc10k.all
         expand('anl/metrics/prior/cre/{db}/pbmc10k.all.scores.csv',
                db=config['dbs']['hg38']['cre'].keys()),

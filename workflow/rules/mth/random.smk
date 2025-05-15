@@ -1,6 +1,7 @@
 rule mdl_random:
     threads: 1
-    singularity: 'workflow/envs/gretabench.sif'
+    # singularity: 'workflow/envs/gretabench.sif'
+    conda: 'gretabench'
     input:
         mdata=rules.extract_case.output.mdata,
         tf=rules.gen_tfs_lambert.output,

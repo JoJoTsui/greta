@@ -44,7 +44,7 @@ rule mdl_o_scenicplus:
 
 
 rule pre_scenicplus:
-    threads: 1
+    threads: 4
     conda: "scenicplus" # Replaced singularity with conda
     input:
         mdata=rules.extract_case.output.mdata,
@@ -97,7 +97,7 @@ rule p2g_scenicplus:
 
 
 rule tfb_scenicplus:
-    threads: 1
+    threads: 4
     conda: "scenicplus" # Replaced singularity with conda
     input:
         dir=rules.mdl_o_scenicplus.output.dir,

@@ -39,7 +39,8 @@ def get_stab_paths(config, mthds, baselines, datasets):
                     d_lst.append(dataset)
                     c_lst.append(case)
                     m_lst.append(mth)
-        return d_lst, c_lst, m_lst
+    # Correct indentation for the return statement
+    return d_lst, c_lst, m_lst
 
 
 d_lst, c_lst, m_lst = get_stab_paths(config, mthds, baselines, stab_datasets)
