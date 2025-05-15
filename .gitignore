@@ -148,3 +148,11 @@ gdata/
 workflow/scripts/methods/scenic+/s1.py
 logs/
 *.ipynb
+
+# ignore results (root level only)
+.pybiomart.sqlite
+/anl/
+/dbs/
+/dts/
+/results/
+/rule_dag/
