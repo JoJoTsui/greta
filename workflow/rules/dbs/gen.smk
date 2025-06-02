@@ -98,7 +98,7 @@ rule gen_motif_granie:
         wget --no-verbose 'https://s3.embl.de/zaugg-web/GRaNIE/TFBS/hg38/PWMScan_HOCOMOCOv12_H12INVIVO.tar.gz' -O {output}.tar.gz && \
         mkdir {output} && \
         tar -xvf {output}.tar.gz -C {output} && \
-        find {output} -type f -exec mv {{}} {output} \; && \
+        find {output} -type f -exec mv {{}} {output} \\; && \
         find {output} -type d -empty -delete && \
         rm {output}.tar.gz
         """
