@@ -34,15 +34,15 @@ def make_combs_rules(w, mthds, baselines, rule_name):
     rule_outputs = []
     if w.dat not in nocombs_datasets:
         # Original code generating all combinations:
-        # for pre, p2g, tfb, mdl in product(mthds, repeat=4):
-        #     rule_outputs.append(
-        #         format_rule(out, w=w, pre=pre, p2g=p2g, tfb=tfb, mdl=mdl)
-        #     )
+        for pre, p2g, tfb, mdl in product(mthds, repeat=4):
+            rule_outputs.append(
+                format_rule(out, w=w, pre=pre, p2g=p2g, tfb=tfb, mdl=mdl)
+            )
         # Modified code to generate only consistent combinations:
-        for mth in mthds:
-             rule_outputs.append(
-                 format_rule(out, w=w, pre=mth, p2g=mth, tfb=mth, mdl=mth)
-             )
+        # for mth in mthds:
+        #      rule_outputs.append(
+        #          format_rule(out, w=w, pre=mth, p2g=mth, tfb=mth, mdl=mth)
+        #      )
     else:
         # This part handles datasets where combinations are not needed, keep as is
         for mth in mthds:
