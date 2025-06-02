@@ -248,6 +248,8 @@ rule benchmark_prior_pbmc10k_specific:
         # Prior C2G metrics for pbmc10k.all
         expand('anl/metrics/prior/c2g/{db}/pbmc10k.all.scores.csv',
                db=config['dbs']['hg38']['c2g'].keys()),
+        # Pior summary metrics for pbmc10k.all
+        'anl/metrics/summary/pbmc10k.all.csv',
     output:
         touch("results/benchmark_prior_pbmc10k_specific.flag")
     shell:
