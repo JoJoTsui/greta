@@ -228,6 +228,9 @@ rule run_scenicplus_pbmc10k_all:
     input:
         'dts/pbmc10k/cases/all/runs/scenicplus.scenicplus.scenicplus.scenicplus.grn.csv'
 
+rule run_scenicplus_dictys_all:
+    input:
+        'dts/pbmc10k/cases/all/runs/scenicplus.scenicplus.scenicplus.dictys.mdl.csv'
 
 # --- Start of new rule ---
 
