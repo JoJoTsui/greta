@@ -4,7 +4,12 @@ localrules: aggr_metric, metric_summ
 rule aggr_metric:
     threads: 1
     input:
-        lambda w: make_combs_rules(w=w, mthds=mthds, baselines=baselines, rule_name='{typ}_{tsk}'.format(typ=w.type, tsk=w.task))
+        lambda w: make_metric_inputs(
+            w=w,
+            mthds=mthds,
+            baselines=baselines,
+            rule_name='{typ}_{tsk}'.format(typ=w.type, tsk=w.task)
+        )
     output:
         'anl/metrics/{type}/{task}/{db}/{dat}.{case}.scores.csv'
     shell:
@@ -44,7 +49,7 @@ rule metric_summ:
             'anl/metrics/prior/cre/phastcons/{dat}.{case}.scores.csv',
             'anl/metrics/prior/cre/zhang21/{dat}.{case}.scores.csv',
             'anl/metrics/prior/cre/promoters/{dat}.{case}.scores.csv',
-            'anl/metrics/prior/c2g/eqtlcatalogue/{dat}.{case}.scores.csv',
+            # 'anl/metrics/prior/c2g/eqtlcatalogue/{dat}.{case}.scores.csv',
         ]
     output: 'anl/metrics/summary/{dat}.{case}.csv'
     shell:

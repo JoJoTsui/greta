@@ -30,11 +30,19 @@ def test_rank(df):
                 net.append(['{0}.{1}'.format(step, mth), name])
     net = pd.DataFrame(net, columns=['source', 'target'])
     sts = pd.concat(sts)
+    if net.shape[0] == 0:
+        return sts.assign(padj=np.nan)
+    tgt_counts = net.groupby('source')['target'].nunique()
+    max_targets = tgt_counts.max()
+    if pd.isna(max_targets) or max_targets <= 1:
+        return sts.assign(padj=np.nan)
+    min_n = int(min(5, max_targets))
     res = dc.get_gsea_df(
         df=df.dropna().set_index('name'),
         stat='f01',
         net=net,
-        times=1000
+        times=1000,
+        min_n=min_n
     )
     res['padj'] = np.where(res['ES'] > 0, res['FDR p-value'], 1)
     res[['stp', 'name']] = res['Term'].str.split('.', n=2, expand=True)

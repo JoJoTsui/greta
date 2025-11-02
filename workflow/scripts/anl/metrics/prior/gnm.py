@@ -66,25 +66,40 @@ if grn.df.shape[0] > 0:
     peaks[['Chromosome', 'Start', 'End']] = peaks['cre'].str.split('-', n=2, expand=True)
     peaks = pr.PyRanges(peaks[['Chromosome', 'Start', 'End']])
     db = db.overlap(peaks)
-    
+
     if grp is not None:
-        # Remove features that are in GRN but not in db
-        db = db[db.df.Name.astype('U').isin(genes)]
-        grn_feats = grn.df['Name'].unique()
-        db_feats = db.df['Name'].unique()
-        features = np.setdiff1d(grn_feats, db_feats)
-        grn = grn[~grn.df['Name'].isin(features)]
-    
+        metrics_available = True
+        db_df = db.df.copy()
+        grn_df = grn.df.copy()
+
+        if db_df.shape[0] == 0 or 'Name' not in db_df.columns or 'Name' not in grn_df.columns:
+            metrics_available = False
+        else:
+            db_df['Name'] = db_df['Name'].astype('U')
+            db_df = db_df[db_df['Name'].isin(genes)]
+            db = pr.PyRanges(db_df)
+
+            grn_df['Name'] = grn_df['Name'].astype('U')
+            grn_feats = grn_df['Name'].unique()
+            db_feats = db_df['Name'].unique()
+            features = np.setdiff1d(grn_feats, db_feats)
+            grn = pr.PyRanges(grn_df[~grn_df['Name'].isin(features)])
+
         tps = 0
         fps = 0
         fns = 0
-        if grn.df.shape[0] > 0:
+        if metrics_available and grn.df.shape[0] > 0 and db.df.shape[0] > 0:
             for feature in db_feats:
                 f_grn = grn[grn.df['Name'] == feature]
                 f_db = db[db.df['Name'] == feature]
                 tps += f_grn.overlap(f_db).df.shape[0]
                 fps += f_grn.overlap(f_db, invert=True).df.shape[0]
                 fns += f_db.overlap(f_grn, invert=True).df.shape[0]
+        elif not metrics_available:
+            prc = np.nan
+            rcl = np.nan
+            f01 = np.nan
+    
     elif resource_name != 'blacklist':
         tps = grn.overlap(db).df.shape[0]
         fps = grn.overlap(db, invert=True).df.shape[0]
@@ -93,7 +108,9 @@ if grn.df.shape[0] > 0:
         tps = grn.overlap(db, invert=True).df.shape[0]
         fps = grn.overlap(db).df.shape[0]
         fns = peaks.overlap(db, invert=True).df.shape[0]
-    if tps > 0:
+    if grp is not None and not metrics_available:
+        prc, rcl, f01 = np.nan, np.nan, np.nan
+    elif tps > 0:
         prc = tps / (tps + fps)
         rcl = tps / (tps + fns)
         f01 = f_beta_score(prc, rcl)

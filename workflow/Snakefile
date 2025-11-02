@@ -28,9 +28,22 @@ def format_rule(out, w, pre, p2g=None, tfb=None, mdl=None, resource=None):
     return frm
 
 
+def _resolve_metric_rule(rule_name):
+    base_name = rule_name.replace('/', '_')
+    segments = base_name.split('_')
+    for end_idx in range(len(segments), 0, -1):
+        cand = '_'.join(segments[:end_idx])
+        try:
+            return getattr(rules, cand)
+        except Exception:
+            continue
+    raise ValueError(f"Unable to map rule_name '{rule_name}' to a defined rule")
+
+
 def make_combs_rules(w, mthds, baselines, rule_name):
     from itertools import product
-    out = getattr(rules, rule_name).output.out
+    resolved_rule = _resolve_metric_rule(rule_name)
+    out = resolved_rule.output.out
     rule_outputs = []
     if w.dat not in nocombs_datasets:
         # Original code generating all combinations:
@@ -56,6 +69,27 @@ def make_combs_rules(w, mthds, baselines, rule_name):
     return rule_outputs
 
 
+def make_consistent_rules(w, mthds, baselines, rule_name):
+    resolved_rule = _resolve_metric_rule(rule_name)
+    out = resolved_rule.output.out
+    rule_outputs = []
+    for mth in mthds:
+        rule_outputs.append(
+            format_rule(out, w=w, pre=mth, p2g=mth, tfb=mth, mdl=mth)
+        )
+    for mth in mthds:
+        rule_outputs.append(format_rule(out, w=w, pre='o_' + mth))
+    for bsl in baselines:
+        rule_outputs.append(format_rule(out, w=w, pre=bsl))
+    return rule_outputs
+
+
+def make_metric_inputs(w, mthds, baselines, rule_name):
+    if getattr(w, 'case', None) == 'tcell':
+        return make_consistent_rules(w=w, mthds=mthds, baselines=baselines, rule_name=rule_name)
+    return make_combs_rules(w=w, mthds=mthds, baselines=baselines, rule_name=rule_name)
+
+
 def list_frags_files(wildcards):
     return expand('dts/{dat}/{smp}.frags.tsv.gz',
                     dat=wildcards.dat,
@@ -67,6 +101,60 @@ def restart_mem(wildcards, attempt):
     if wildcards.dat in big_datasets:
         mem = mem * 2
     return mem
+
+
+def prior_metric_targets(dat, case):
+    """Collect aggregate prior metric targets for a dataset/case pair."""
+    tfm_dbs = list(config['dbs']['hg38']['tfm'].keys())
+    tfp_dbs = [k for k in config['dbs']['hg38']['tfp'].keys() if k != 'europmc']
+    tfb_dbs = [k for k in config['dbs']['hg38']['tfb'].keys() if k != 'chipatlas']
+    c2g_dbs = list(config['dbs']['hg38']['c2g'].keys())
+    if case == 'tcell':
+        c2g_dbs = [k for k in c2g_dbs if k != 'eqtlcatalogue']
+
+    targets = []
+    targets.extend(
+        expand(
+            'anl/metrics/prior/tfm/{db}/{dat}.{case}.scores.csv',
+            db=tfm_dbs,
+            dat=dat,
+            case=case,
+        )
+    )
+    targets.extend(
+        expand(
+            'anl/metrics/prior/tfp/{db}/{dat}.{case}.scores.csv',
+            db=tfp_dbs,
+            dat=dat,
+            case=case,
+        )
+    )
+    targets.extend(
+        expand(
+            'anl/metrics/prior/tfb/{db}/{dat}.{case}.scores.csv',
+            db=tfb_dbs,
+            dat=dat,
+            case=case,
+        )
+    )
+    targets.extend(
+        expand(
+            'anl/metrics/prior/cre/{db}/{dat}.{case}.scores.csv',
+            db=config['dbs']['hg38']['cre'].keys(),
+            dat=dat,
+            case=case,
+        )
+    )
+    targets.extend(
+        expand(
+            'anl/metrics/prior/c2g/{db}/{dat}.{case}.scores.csv',
+            db=c2g_dbs,
+            dat=dat,
+            case=case,
+        )
+    )
+    # Deduplicate while preserving deterministic ordering
+    return sorted(set(targets))
 
 
 configfile: 'config/config.yaml'
@@ -228,31 +316,30 @@ rule run_scenicplus_pbmc10k_all:
     input:
         'dts/pbmc10k/cases/all/runs/scenicplus.scenicplus.scenicplus.scenicplus.grn.csv'
 
-rule run_scenicplus_dictys_all:
+rule run_scenicplus_dictys_tcell:
     input:
-        'dts/pbmc10k/cases/all/runs/scenicplus.scenicplus.scenicplus.dictys.mdl.csv'
+        'dts/pbmc10k/cases/tcell/runs/scenicplus.scenicplus.scenicplus.scenicplus.grn.csv',
+        'dts/pbmc10k/cases/tcell/runs/dictys.dictys.dictys.dictys.grn.csv',
+        'dts/pbmc10k/cases/tcell/runs/o_scenicplus.o_scenicplus.o_scenicplus.o_scenicplus.mdl.csv',
+        'dts/pbmc10k/cases/tcell/runs/o_dictys.o_dictys.o_dictys.o_dictys.mdl.csv'
+
+
+# Helper marker to force Snakemake to revisit aggregate prior metrics each run
+rule benchmark_prior_ready:
+    input:
+        lambda w: prior_metric_targets(dat=w.dat, case=w.case)
+    output:
+        ready=temp('results/.benchmark_prior.{dat}.{case}.ready')
+    shell:
+        "touch {output.ready}"
+
 
 # --- Start of new rule ---
 
 rule benchmark_prior_pbmc10k_specific:
     input:
-        # Prior TFM metrics for pbmc10k.all
-        expand('anl/metrics/prior/tfm/{db}/pbmc10k.all.scores.csv',
-               db=config['dbs']['hg38']['tfm'].keys()),
-        # Prior TFP metrics for pbmc10k.all (excluding europmc)
-        expand('anl/metrics/prior/tfp/{db}/pbmc10k.all.scores.csv',
-               db=[k for k in config['dbs']['hg38']['tfp'].keys() if k != 'europmc']),
-        # Prior TFB metrics for pbmc10k.all (excluding chipatlas)
-        expand('anl/metrics/prior/tfb/{db}/pbmc10k.all.scores.csv',
-               db=[k for k in config['dbs']['hg38']['tfb'].keys() if k != 'chipatlas']),
-        # Prior CRE metrics for pbmc10k.all
-        expand('anl/metrics/prior/cre/{db}/pbmc10k.all.scores.csv',
-               db=config['dbs']['hg38']['cre'].keys()),
-        # Prior C2G metrics for pbmc10k.all
-        expand('anl/metrics/prior/c2g/{db}/pbmc10k.all.scores.csv',
-               db=config['dbs']['hg38']['c2g'].keys()),
-        # Pior summary metrics for pbmc10k.all
-        'anl/metrics/summary/pbmc10k.all.csv',
+        prior_ready='results/.benchmark_prior.pbmc10k.all.ready',
+        summary='anl/metrics/summary/pbmc10k.all.csv'
     output:
         touch("results/benchmark_prior_pbmc10k_specific.flag")
     shell:
@@ -261,10 +348,22 @@ rule benchmark_prior_pbmc10k_specific:
 # --- End of new rule ---
 
 
+rule benchmark_prior_pbmc10k_tcell:
+    input:
+        rules.run_scenicplus_dictys_tcell.input,
+        prior_ready='results/.benchmark_prior.pbmc10k.tcell.ready',
+        summary='anl/metrics/summary/pbmc10k.tcell.csv'
+    output:
+        touch("results/benchmark_prior_pbmc10k_tcell.flag")
+    shell:
+        "touch {output}"
+
+
 rule all:
     input:
         'results/databases_downloaded.flag',
         rules.benchmark_prior_pbmc10k_specific.output, # Added the new target flag
+        rules.benchmark_prior_pbmc10k_tcell.output,
         # Add other final desired outputs of the workflow
         # Optionally add the new scenicplus output here if it should be part of the default 'all' target
         # rules.run_scenicplus_pbmc10k_all.input,
