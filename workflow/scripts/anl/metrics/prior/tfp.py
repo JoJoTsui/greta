@@ -2,6 +2,7 @@ from itertools import combinations
 import scipy.stats as ss
 import numpy as np
 import pandas as pd
+import argparse
 import sys
 import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -38,19 +39,27 @@ def find_pairs(grn, thr_pval):
     return pairs
 
 
+# Parse arguments
+parser = argparse.ArgumentParser()
+parser.add_argument('-a', '--grn', required=True, help='GRN file path')
+parser.add_argument('-b', '--db', required=True, help='TFP database file path')
+parser.add_argument('-p', '--pval', type=float, required=True, help='P-value threshold')
+parser.add_argument('-f', '--output', required=True, help='Output file path')
+args = parser.parse_args()
+
 # Read
-grn = pd.read_csv(sys.argv[1]).drop_duplicates(['source', 'target'])
-tfp = pd.read_csv(sys.argv[2], sep='\t', header=None)
+grn = pd.read_csv(args.grn).drop_duplicates(['source', 'target'])
+tfp = pd.read_csv(args.db, sep='\t', header=None)
 
 # Process
 tfs = set(tfp[0]) | set(tfp[1])
 grn = grn[grn['source'].isin(tfs)]
 tfp = set(['|'.join(sorted([a, b])) for a, b in zip(tfp[0], tfp[1])])
-grn_name = os.path.basename(sys.argv[1]).replace('.grn.csv', '')
+grn_name = os.path.basename(args.grn).replace('.grn.csv', '')
 
 if grn.shape[0] > 1:  # Need at least 2 TFs in grn
     # Find pairs
-    p_grn = find_pairs(grn, thr_pval=float(sys.argv[3]))
+    p_grn = find_pairs(grn, thr_pval=args.pval)
     
     # Compute F score
     tp = len(p_grn & tfp)
@@ -67,4 +76,4 @@ else:
     df = pd.DataFrame([[grn_name, np.nan, np.nan, np.nan]], columns=['name', 'prc', 'rcl', 'f01'])
 
 # Write
-df.to_csv(sys.argv[4], index=False)
+df.to_csv(args.output, index=False)

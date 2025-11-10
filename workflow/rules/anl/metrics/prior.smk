@@ -33,7 +33,10 @@ rule prior_tfp:
     shell:
         """
         python workflow/scripts/anl/metrics/prior/tfp.py \
-        {input.grn} {input.db} {params.thr_p} {output.out}
+        -a {input.grn} \
+        -b {input.db} \
+        -p {params.thr_p} \
+        -f {output.out}
         """
 
 
@@ -73,6 +76,82 @@ rule prior_cre:
         -a {input.grn} \
         -b {input.db} \
         -f {output}
+        """
+
+
+# ============ NEW PARALLEL RULES FOR DETAILED ANALYSIS ============
+
+rule prior_detailed_tfm:
+    threads: 1
+    conda: 'gretabench'
+    input:
+        grn=lambda wildcards: rules.grn_run.output.out.format(**wildcards),
+        db='dbs/hg38/tfm/{db}/{db}.tsv',
+    output:
+        out='anl/metrics/prior_detailed/tfm/{db}/{dat}.{case}/{pre}.{p2g}.{tfb}.{mdl}.scores.csv',
+        confusion='anl/metrics/prior_detailed/tfm/{db}/{dat}.{case}/{pre}.{p2g}.{tfb}.{mdl}.confusion.csv'
+    params:
+        subset=lambda wildcards: f'-s anl/metrics/prior_detailed/tfm/{wildcards.db}/{wildcards.dat}.{wildcards.case}.subset.csv' if wildcards.case != 'all' else ''
+    shell:
+        """
+        python workflow/scripts/anl/metrics/prior/tfm_detailed.py \
+        -a {input.grn} \
+        -b {input.db} \
+        -f {output.out} \
+        -c {output.confusion} \
+        {params.subset}
+        """
+
+
+rule prior_detailed_tfp:
+    threads: 1
+    conda: 'gretabench'
+    input:
+        grn=lambda wildcards: rules.grn_run.output.out.format(**wildcards),
+        db='dbs/hg38/tfp/{db}/{db}.tsv',
+    output:
+        out='anl/metrics/prior_detailed/tfp/{db}/{dat}.{case}/{pre}.{p2g}.{tfb}.{mdl}.scores.csv',
+        confusion='anl/metrics/prior_detailed/tfp/{db}/{dat}.{case}/{pre}.{p2g}.{tfb}.{mdl}.confusion.csv'
+    params:
+        thr_p=0.01,
+    shell:
+        """
+        python workflow/scripts/anl/metrics/prior/tfp_detailed.py \
+        -a {input.grn} \
+        -b {input.db} \
+        -p {params.thr_p} \
+        -f {output.out} \
+        -c {output.confusion}
+        """
+
+
+rule aggregate_tfm_confusion_detailed:
+    threads: 1
+    conda: 'gretabench'
+    input:
+        lambda w: [f.replace('.scores.csv', '.confusion.csv') for f in make_metric_inputs(w=w, mthds=mthds, baselines=baselines, rule_name='prior_detailed_tfm')]
+    output:
+        out='anl/metrics/prior_detailed/tfm/{db}/{dat}.{case}.confusion_agg.csv'
+    shell:
+        """
+        python workflow/scripts/anl/metrics/aggregate_confusion.py \
+        -i {input} \
+        -o {output.out}
+        """
+
+
+rule aggregate_tfp_confusion_detailed:
+    threads: 1
+    conda: 'gretabench'
+    input:
+        lambda w: [f.replace('.scores.csv', '.confusion.csv') for f in make_metric_inputs(w=w, mthds=mthds, baselines=baselines, rule_name='prior_detailed_tfp')]
+    output:
+        out='anl/metrics/prior_detailed/tfp/{db}/{dat}.{case}.confusion_agg.csv'
+    shell:
+        """
+        python workflow/scripts/anl/metrics/aggregate_confusion.py \
+        -i {input} \
+        -o {output.out}
         """
 
 
