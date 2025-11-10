@@ -24,7 +24,11 @@ for df_path in df_paths:
         task = os.path.basename(os.path.dirname(os.path.dirname(os.path.dirname(df_path))))
         metric = os.path.basename(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(df_path)))))
         tmp[['metric', 'task', 'db', 'dts']] = [metric, task, db, dts]
-        tmp = tmp[['metric', 'task', 'db', 'dts', 'name', 'prc', 'rcl', 'f01']]
+        # Include TP/FP/FN columns if they exist
+        base_cols = ['metric', 'task', 'db', 'dts', 'name', 'prc', 'rcl', 'f01']
+        if 'tp' in tmp.columns and 'fp' in tmp.columns and 'fn' in tmp.columns:
+            base_cols.extend(['tp', 'fp', 'fn'])
+        tmp = tmp[[col for col in base_cols if col in tmp.columns]]
     df.append(tmp)
 df = pd.concat(df)
 

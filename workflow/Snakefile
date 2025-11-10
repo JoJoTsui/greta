@@ -105,54 +105,132 @@ def restart_mem(wildcards, attempt):
 
 def prior_metric_targets(dat, case):
     """Collect aggregate prior metric targets for a dataset/case pair."""
-    tfm_dbs = list(config['dbs']['hg38']['tfm'].keys())
-    tfp_dbs = [k for k in config['dbs']['hg38']['tfp'].keys() if k != 'europmc']
-    tfb_dbs = [k for k in config['dbs']['hg38']['tfb'].keys() if k != 'chipatlas']
-    c2g_dbs = list(config['dbs']['hg38']['c2g'].keys())
+    # Restrict databases for tcell case to match detailed rule
     if case == 'tcell':
-        c2g_dbs = [k for k in c2g_dbs if k != 'eqtlcatalogue']
+        tfm_dbs = ['hpa', 'tfmdb']
+        tfp_dbs = ['intact']
+        # Skip tfb, c2g, cre for direct comparison
+        targets = []
+        targets.extend(
+            expand(
+                'anl/metrics/prior/tfm/{db}/{dat}.{case}.scores.csv',
+                db=tfm_dbs,
+                dat=dat,
+                case=case,
+            )
+        )
+        targets.extend(
+            expand(
+                'anl/metrics/prior/tfp/{db}/{dat}.{case}.scores.csv',
+                db=tfp_dbs,
+                dat=dat,
+                case=case,
+            )
+        )
+        # Deduplicate while preserving deterministic ordering
+        return sorted(set(targets))
+    else:
+        tfm_dbs = list(config['dbs']['hg38']['tfm'].keys())
+        tfp_dbs = [k for k in config['dbs']['hg38']['tfp'].keys() if k != 'europmc']
+        tfb_dbs = [k for k in config['dbs']['hg38']['tfb'].keys() if k != 'chipatlas']
+        c2g_dbs = list(config['dbs']['hg38']['c2g'].keys())
+        targets = []
+        targets.extend(
+            expand(
+                'anl/metrics/prior/tfm/{db}/{dat}.{case}.scores.csv',
+                db=tfm_dbs,
+                dat=dat,
+                case=case,
+            )
+        )
+        targets.extend(
+            expand(
+                'anl/metrics/prior/tfp/{db}/{dat}.{case}.scores.csv',
+                db=tfp_dbs,
+                dat=dat,
+                case=case,
+            )
+        )
+        targets.extend(
+            expand(
+                'anl/metrics/prior/tfb/{db}/{dat}.{case}.scores.csv',
+                db=tfb_dbs,
+                dat=dat,
+                case=case,
+            )
+        )
+        targets.extend(
+            expand(
+                'anl/metrics/prior/c2g/{db}/{dat}.{case}.scores.csv',
+                db=c2g_dbs,
+                dat=dat,
+                case=case,
+            )
+        )
+        targets.extend(
+            expand(
+                'anl/metrics/prior/cre/{db}/{dat}.{case}.scores.csv',
+                db=['fantom5', 'screen'],
+                dat=dat,
+                case=case,
+            )
+        )
+        # Deduplicate while preserving deterministic ordering
+        return sorted(set(targets))
 
+
+def prior_metric_targets_detailed(dat, case):
+    """Collect detailed prior metric targets (with TP/FP/FN) - PARALLEL VERSION."""
+    # Focus on specific databases: hpa, tfmdb (tfm), intact (tfp)
+    tfm_dbs = ['hpa', 'tfmdb']
+    tfp_dbs = ['intact']
+    
     targets = []
+    
+    # Add metric scores for tfm databases
     targets.extend(
         expand(
-            'anl/metrics/prior/tfm/{db}/{dat}.{case}.scores.csv',
+            'anl/metrics/prior_detailed/tfm/{db}/{dat}.{case}.scores.csv',
             db=tfm_dbs,
             dat=dat,
             case=case,
         )
     )
+    
+    # Add metric scores for tfp databases
     targets.extend(
         expand(
-            'anl/metrics/prior/tfp/{db}/{dat}.{case}.scores.csv',
+            'anl/metrics/prior_detailed/tfp/{db}/{dat}.{case}.scores.csv',
             db=tfp_dbs,
             dat=dat,
             case=case,
         )
     )
+    
+    # Add confusion matrix outputs (TP/FP/FN) for tfm
     targets.extend(
         expand(
-            'anl/metrics/prior/tfb/{db}/{dat}.{case}.scores.csv',
-            db=tfb_dbs,
+            'anl/metrics/prior_detailed/tfm/{db}/{dat}.{case}.confusion_agg.csv',
+            db=tfm_dbs,
             dat=dat,
             case=case,
         )
     )
+    
+    # Add confusion matrix outputs (TP/FP/FN) for tfp
     targets.extend(
         expand(
-            'anl/metrics/prior/cre/{db}/{dat}.{case}.scores.csv',
-            db=config['dbs']['hg38']['cre'].keys(),
+            'anl/metrics/prior_detailed/tfp/{db}/{dat}.{case}.confusion_agg.csv',
+            db=tfp_dbs,
             dat=dat,
             case=case,
         )
     )
-    targets.extend(
-        expand(
-            'anl/metrics/prior/c2g/{db}/{dat}.{case}.scores.csv',
-            db=c2g_dbs,
-            dat=dat,
-            case=case,
-        )
-    )
+    
+    # Note: Cell-type-specific database subsets are created as side effects
+    # by the tfm_detailed.py script but are not tracked as Snakemake outputs
+    # They will be saved to: anl/metrics/prior_detailed/tfm/{db}/{dat}.{case}.subset.csv
+    
     # Deduplicate while preserving deterministic ordering
     return sorted(set(targets))
 
@@ -231,9 +309,9 @@ include: 'rules/plt/figs.smk'
 rule download_databases:
     input:
         # c2g outputs
-        "dbs/hg38/c2g/eqtlcatalogue/meta.tsv",
-        "dbs/hg38/c2g/eqtlcatalogue/eqtlcatalogue.bed",
-        "dbs/hg38/c2g/links.tsv.gz",
+        # "dbs/hg38/c2g/eqtlcatalogue/meta.tsv",
+        # "dbs/hg38/c2g/eqtlcatalogue/eqtlcatalogue.bed",
+        # "dbs/hg38/c2g/links.tsv.gz",
         # cre outputs
         "dbs/hg38/cre/blacklist/blacklist.bed",
         "dbs/hg38/cre/encode/encode.bed",
@@ -352,17 +430,41 @@ rule benchmark_prior_pbmc10k_tcell:
     input:
         rules.run_scenicplus_dictys_tcell.input,
         prior_ready='results/.benchmark_prior.pbmc10k.tcell.ready',
-        summary='anl/metrics/summary/pbmc10k.tcell.csv'
+        summary='anl/metrics/summary/pbmc10k.tcell.csv'  # Commented out to skip dbs_stats/dbs_terms dependencies
     output:
         touch("results/benchmark_prior_pbmc10k_tcell.flag")
     shell:
         "touch {output}"
 
 
+# ============ NEW PARALLEL RULES FOR DETAILED ANALYSIS ============
+
+rule benchmark_prior_detailed_pbmc10k:
+    """
+    NEW PARALLEL RULE: Benchmark prior metrics with detailed TP/FP/FN analysis
+    Focuses on hpa, tfmdb, and intact databases
+    Outputs: scores, confusion matrices, and cell-type-specific subsets
+    """
+    input:
+        lambda wildcards: prior_metric_targets_detailed('pbmc10k', 'all')
+    output:
+        touch('results/benchmark_prior_detailed_pbmc10k.flag')
+
+
+rule benchmark_prior_detailed_pbmc10k_tcell:
+    """
+    NEW PARALLEL RULE: Benchmark prior metrics for T cell case with detailed analysis
+    """
+    input:
+        lambda wildcards: prior_metric_targets_detailed('pbmc10k', 'tcell')
+    output:
+        touch('results/benchmark_prior_detailed_pbmc10k_tcell.flag')
+
+
 rule all:
     input:
-        'results/databases_downloaded.flag',
-        rules.benchmark_prior_pbmc10k_specific.output, # Added the new target flag
+        # 'results/databases_downloaded.flag',  # Commented out to skip c2g_eqtlcatalogue, dbs_stats, dbs_terms
+        rules.benchmark_prior_pbmc10k_specific.output, # Commented out to skip dbs_stats/dbs_terms
         rules.benchmark_prior_pbmc10k_tcell.output,
         # Add other final desired outputs of the workflow
         # Optionally add the new scenicplus output here if it should be part of the default 'all' target
