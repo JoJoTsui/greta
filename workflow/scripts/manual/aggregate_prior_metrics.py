@@ -14,11 +14,35 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--dataset", required=True, help="Dataset identifier (e.g. pbmc10k)")
     parser.add_argument("--case", required=True, help="Case identifier (e.g. tcell)")
-    parser.add_argument("--input-root", type=Path, default=None, help="Root directory with metric outputs")
+    parser.add_argument(
+        "--input-root",
+        type=Path,
+        default=None,
+        help=(
+            "Parent directory that contains metric-type folders (e.g. 'prior', 'prior_detailed'). "
+            "If omitted, defaults to '<repo>/anl/metrics'."
+        ),
+    )
+    parser.add_argument(
+        "--metric-types",
+        nargs="*",
+        default=None,
+        help=(
+            "Optional explicit list of top-level metric types to aggregate (e.g. prior prior_detailed). "
+            "Ignored when --input-root is provided."
+        ),
+    )
     parser.add_argument("--summary-out", type=Path, default=None, help="Optional override for summary CSV path")
     parser.add_argument("--metrics", nargs="*", default=None, help="Subset of metric families to aggregate")
     parser.add_argument("--python", type=Path, default=Path(sys.executable), help="Python executable to use")
-    parser.add_argument("--add-info", action="store_true", help="Add metadata columns to aggregated tables")
+    # Default add-info to True so outputs can be discriminated (metric column contains prior/prior_detailed)
+    parser.add_argument(
+        "--add-info",
+        action="store_true",
+        default=True,
+        help="Add metadata columns (metric/task/db/dts) to aggregated tables [default: True]",
+    )
+    parser.add_argument("--no-add-info", action="store_false", dest="add_info", help="Disable metadata columns")
     parser.add_argument("--skip-existing", action="store_true", help="Skip aggregation when outputs already exist")
     parser.add_argument("--dry-run", action="store_true", help="Print planned commands without running them")
     return parser.parse_args(argv)
@@ -84,7 +108,11 @@ def _ensure_repo_view(
 def main(argv: Optional[Sequence[str]] = None) -> int:
     args = parse_args(argv)
     repo_root = Path(__file__).resolve().parents[3]
-    input_root = (args.input_root or (repo_root / "anl" / "metrics" / "prior")).resolve()
+
+    # Determine which top-level metric type directories to aggregate
+    base_root: Path = (args.input_root.resolve() if args.input_root is not None else (repo_root / "anl" / "metrics").resolve())
+    types = args.metric_types or ["prior", "prior_detailed"]
+    metric_type_roots: List[Path] = [(base_root / t).resolve() for t in types]
 
     aggregator_script = repo_root / "workflow" / "scripts" / "anl" / "metrics" / "aggregate.py"
     summary_script = repo_root / "workflow" / "scripts" / "anl" / "metrics" / "test.py"
@@ -93,23 +121,52 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     if not summary_script.exists():
         raise FileNotFoundError(f"Missing test.py script at {summary_script}")
 
-    metrics = args.metrics or [d.name for d in input_root.iterdir() if d.is_dir()]
-    metric_type = input_root.name
-
     aggregated_paths: List[Path] = []
     summary_inputs: List[Path] = []
     cleanup_targets: List[Path] = []
-    for metric in sorted(metrics):
-        metric_dir = input_root / metric
-        if not metric_dir.exists():
+
+    for input_root in metric_type_roots:
+        if not input_root.exists():
+            print(f"Skip missing metric type root: {input_root}", file=sys.stderr)
             continue
-        for db_dir in sorted(d for d in metric_dir.iterdir() if d.is_dir()):
-            dataset_case_dir = db_dir / f"{args.dataset}.{args.case}"
-            input_files = _collect_inputs(dataset_case_dir)
-            if not input_files:
+
+        metrics = args.metrics or [d.name for d in input_root.iterdir() if d.is_dir()]
+        metric_type = input_root.name
+
+        for metric in sorted(metrics):
+            metric_dir = input_root / metric
+            if not metric_dir.exists():
                 continue
-            aggregate_out = db_dir / f"{args.dataset}.{args.case}.scores.csv"
-            if args.skip_existing and aggregate_out.exists():
+            for db_dir in sorted(d for d in metric_dir.iterdir() if d.is_dir()):
+                dataset_case_dir = db_dir / f"{args.dataset}.{args.case}"
+                input_files = _collect_inputs(dataset_case_dir)
+                if not input_files:
+                    continue
+                aggregate_out = db_dir / f"{args.dataset}.{args.case}.scores.csv"
+                if args.skip_existing and aggregate_out.exists():
+                    repo_view, cleanup = _ensure_repo_view(
+                        aggregate_out,
+                        repo_root,
+                        metric_type,
+                        metric,
+                        db_dir.name,
+                        args.dataset,
+                        args.case,
+                    )
+                    summary_inputs.append(repo_view)
+                    aggregated_paths.append(aggregate_out)
+                    if cleanup:
+                        cleanup_targets.append(repo_view)
+                    continue
+                _aggregate_metric(
+                    python_exe=args.python,
+                    aggregator=aggregator_script,
+                    input_files=input_files,
+                    output_path=aggregate_out,
+                    add_info=args.add_info,
+                    dry_run=args.dry_run,
+                    repo_root=repo_root,
+                )
                 repo_view, cleanup = _ensure_repo_view(
                     aggregate_out,
                     repo_root,
@@ -123,29 +180,6 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                 aggregated_paths.append(aggregate_out)
                 if cleanup:
                     cleanup_targets.append(repo_view)
-                continue
-            _aggregate_metric(
-                python_exe=args.python,
-                aggregator=aggregator_script,
-                input_files=input_files,
-                output_path=aggregate_out,
-                add_info=args.add_info,
-                dry_run=args.dry_run,
-                repo_root=repo_root,
-            )
-            repo_view, cleanup = _ensure_repo_view(
-                aggregate_out,
-                repo_root,
-                metric_type,
-                metric,
-                db_dir.name,
-                args.dataset,
-                args.case,
-            )
-            summary_inputs.append(repo_view)
-            aggregated_paths.append(aggregate_out)
-            if cleanup:
-                cleanup_targets.append(repo_view)
 
     if not aggregated_paths:
         print("No aggregated outputs produced", file=sys.stderr)
