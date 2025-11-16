@@ -25,7 +25,7 @@ for df_path in df_paths:
         metric = os.path.basename(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(df_path)))))
         tmp[['metric', 'task', 'db', 'dts']] = [metric, task, db, dts]
         # Include TP/FP/FN columns if they exist
-        base_cols = ['metric', 'task', 'db', 'dts', 'name', 'prc', 'rcl', 'f01']
+        base_cols = ['metric', 'task', 'db', 'dts', 'name', 'prc', 'rcl', 'f01', 'auprc', 'auroc']
         if 'tp' in tmp.columns and 'fp' in tmp.columns and 'fn' in tmp.columns:
             base_cols.extend(['tp', 'fp', 'fn'])
         tmp = tmp[[col for col in base_cols if col in tmp.columns]]
